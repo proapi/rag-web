@@ -2,8 +2,8 @@
 # check=error=true
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t rag_web .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name rag_web rag_web
+# docker build -t rag-web .
+# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name rag-web rag-web
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
@@ -52,9 +52,6 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-
-
 
 # Final stage for app image
 FROM base
