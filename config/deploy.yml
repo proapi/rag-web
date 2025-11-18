@@ -7,7 +7,7 @@ image: proapi/rag-web
 # Deploy to these servers.
 servers:
   web:
-    - contabo4
+    - 144.91.78.113
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -94,7 +94,7 @@ builder:
 # Use a different ssh user than root
 ssh:
   user: pawelski
-  keys: [ "/.kamal/keys/deploy" ]
+  keys: [ ".kamal/keys/deploy" ]
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
