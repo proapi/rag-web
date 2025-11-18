@@ -94,6 +94,7 @@ builder:
 # Use a different ssh user than root
 ssh:
   user: pawelski
+  key: ~/.ssh/key
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
