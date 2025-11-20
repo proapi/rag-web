@@ -1,0 +1,60 @@
+<%= turbo_stream.update "query_results" do %>
+  <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="ml-3 flex-1">
+        <h3 class="text-sm font-medium text-green-800 mb-2">Answer</h3>
+        <div class="text-sm text-green-700 bg-white rounded p-3 border border-green-200">
+          <%= @query.answer %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<%= turbo_stream.replace "query_history" do %>
+  <%= turbo_frame_tag "query_history" do %>
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Queries</h3>
+
+        <div class="space-y-4">
+          <% [*[@query], *Current.user.queries.recent.where.not(id: @query.id).limit(9)].each do |query| %>
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-900 mb-2"><%= query.question %></p>
+                  <% if query.successful? %>
+                    <p class="text-sm text-gray-600 bg-gray-50 rounded p-3"><%= query.answer %></p>
+                  <% else %>
+                    <p class="text-sm text-red-600 bg-red-50 rounded p-3">
+                      <span class="font-medium">Error:</span> <%= query.error %>
+                    </p>
+                  <% end %>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                  <% if query.successful? %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Success
+                    </span>
+                  <% else %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Failed
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+              <div class="mt-2 text-xs text-gray-500">
+                <%= time_ago_in_words(query.created_at) %> ago
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

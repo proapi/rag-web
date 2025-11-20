@@ -102,7 +102,7 @@
               <div class="ml-5 w-0 flex-1">
                 <dl>
                   <dt class="text-sm font-medium text-gray-500 truncate">Queries Processed</dt>
-                  <dd class="text-2xl font-semibold text-gray-900">0</dd>
+                  <dd class="text-2xl font-semibold text-gray-900"><%= Current.user.queries.count %></dd>
                 </dl>
               </div>
             </div>
@@ -128,27 +128,103 @@
         </div>
       </div>
 
-      <!-- Main Content Area (Placeholder) -->
-      <div class="bg-white shadow rounded-lg">
+      <!-- Query Interface -->
+      <div class="bg-white shadow rounded-lg mb-8" data-controller="query">
         <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>
-          <div class="border-4 border-dashed border-gray-200 rounded-lg p-12 text-center">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No activity yet</h3>
-            <p class="mt-1 text-sm text-gray-500">Get started by adding your first document or query.</p>
-            <div class="mt-6">
-              <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Get Started
-              </button>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Ask a Question</h3>
+
+          <%= form_with url: dashboard_query_path, method: :post,
+              data: {
+                turbo_frame: "query_results",
+                action: "turbo:submit-start->query#startLoading turbo:submit-end->query#stopLoading"
+              } do |form| %>
+            <div class="space-y-4">
+              <div>
+                <%= form.text_area :question,
+                    placeholder: "Enter your question here...",
+                    rows: 3,
+                    required: true,
+                    data: { query_target: "input" },
+                    class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md resize-none" %>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-500">Ask any question to get AI-powered answers from your documents.</p>
+                <%= form.submit "Submit Query",
+                    data: { query_target: "submit" },
+                    class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" %>
+              </div>
+
+              <!-- Loading Spinner -->
+              <div data-query-target="loading" class="hidden">
+                <div class="flex items-center justify-center space-x-2 text-indigo-600">
+                  <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span class="text-sm font-medium">Processing your query...</span>
+                </div>
+              </div>
             </div>
-          </div>
+          <% end %>
+
+          <!-- Query Results Frame -->
+          <%= turbo_frame_tag "query_results" do %>
+          <% end %>
         </div>
       </div>
+
+      <!-- Query History -->
+      <%= turbo_frame_tag "query_history" do %>
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Queries</h3>
+
+            <% if @recent_queries.any? %>
+              <div class="space-y-4">
+                <% @recent_queries.each do |query| %>
+                  <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 mb-2"><%= query.question %></p>
+                        <% if query.successful? %>
+                          <p class="text-sm text-gray-600 bg-gray-50 rounded p-3"><%= query.answer %></p>
+                        <% else %>
+                          <p class="text-sm text-red-600 bg-red-50 rounded p-3">
+                            <span class="font-medium">Error:</span> <%= query.error %>
+                          </p>
+                        <% end %>
+                      </div>
+                      <div class="ml-4 flex-shrink-0">
+                        <% if query.successful? %>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Success
+                          </span>
+                        <% else %>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Failed
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500">
+                      <%= time_ago_in_words(query.created_at) %> ago
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No queries yet</h3>
+                <p class="mt-1 text-sm text-gray-500">Start by asking your first question above.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
   </main>
 </div>
