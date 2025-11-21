@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   get "dashboard/show"
   post "dashboard/query"
+  resources :documents, only: [ :index ]
+  resources :indexes, only: [ :index ]
   resource :session
   resources :passwords, param: :token
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

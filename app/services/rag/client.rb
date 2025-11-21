@@ -29,7 +29,51 @@ module Rag
         timeout: 30
       )
 
-      handle_response(response)
+      handle_response(response, :query)
+    rescue AuthenticationError, InvalidResponseError, Error
+      # Re-raise our custom errors
+      raise
+    rescue HTTParty::Error => e
+      Rails.logger.error("RAG API HTTParty Error: #{e.message}")
+      raise ConnectionError, "Unable to reach RAG service"
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.error("RAG API Timeout: #{e.message}")
+      raise TimeoutError, "Request timed out, please try again"
+    rescue StandardError => e
+      Rails.logger.error("RAG API Unknown Error: #{e.class} - #{e.message}")
+      raise Error, "An unexpected error occurred"
+    end
+
+    def list_indexes
+      response = self.class.get(
+        "/indexes",
+        headers: headers,
+        timeout: 30
+      )
+
+      handle_response(response, :indexes)
+    rescue AuthenticationError, InvalidResponseError, Error
+      # Re-raise our custom errors
+      raise
+    rescue HTTParty::Error => e
+      Rails.logger.error("RAG API HTTParty Error: #{e.message}")
+      raise ConnectionError, "Unable to reach RAG service"
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.error("RAG API Timeout: #{e.message}")
+      raise TimeoutError, "Request timed out, please try again"
+    rescue StandardError => e
+      Rails.logger.error("RAG API Unknown Error: #{e.class} - #{e.message}")
+      raise Error, "An unexpected error occurred"
+    end
+
+    def list_documents
+      response = self.class.get(
+        "/documents",
+        headers: headers,
+        timeout: 30
+      )
+
+      handle_response(response, :documents)
     rescue AuthenticationError, InvalidResponseError, Error
       # Re-raise our custom errors
       raise
@@ -53,10 +97,10 @@ module Rag
       }
     end
 
-    def handle_response(response)
+    def handle_response(response, type)
       case response.code
       when 200
-        parse_success_response(response)
+        parse_success_response(response, type)
       when 401, 403
         Rails.logger.error("RAG API Authentication Failed: #{response.code}")
         raise AuthenticationError, "RAG service authentication failed"
@@ -72,12 +116,25 @@ module Rag
       end
     end
 
-    def parse_success_response(response)
+    def parse_success_response(response, type)
       parsed = JSON.parse(response.body)
 
-      unless parsed.is_a?(Hash) && parsed["answer"]
-        Rails.logger.error("RAG API Invalid Response Format: #{response.body}")
-        raise InvalidResponseError, "Received invalid response format from RAG service"
+      case type
+      when :query
+        unless parsed.is_a?(Hash) && parsed["answer"]
+          Rails.logger.error("RAG API Invalid Response Format: #{response.body}")
+          raise InvalidResponseError, "Received invalid response format from RAG service"
+        end
+      when :indexes
+        unless parsed.is_a?(Hash) && parsed.key?("indexes")
+          Rails.logger.error("RAG API Invalid Indexes Response Format: #{response.body}")
+          raise InvalidResponseError, "Received invalid indexes response format from RAG service"
+        end
+      when :documents
+        unless parsed.is_a?(Array)
+          Rails.logger.error("RAG API Invalid Documents Response Format: #{response.body}")
+          raise InvalidResponseError, "Received invalid documents response format from RAG service"
+        end
       end
 
       parsed
