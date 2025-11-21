@@ -30,14 +30,14 @@ RSpec.describe "Documents", type: :request do
             },
             {
               "doc_id" => "047414f0-42e9-42bb-ba35-ec645239fdfe",
-              "file_name" => "database_design_principles.pdf",
-              "file_path" => "/Users/pawelski/Projects/AI/rag-system/rag-core/data/database_design_principles.pdf",
+              "file_name" => "api_documentation.pdf",
+              "file_path" => "/Users/pawelski/Projects/AI/rag-system/rag-core/data/api_documentation.pdf",
               "file_type" => ".pdf"
             },
             {
               "doc_id" => "4ec6a2a1-fe37-4267-8722-f2196a6775c8",
-              "file_name" => "database_design_principles.pdf",
-              "file_path" => "/Users/pawelski/Projects/AI/rag-system/rag-core/data/database_design_principles.pdf",
+              "file_name" => "system_architecture.pdf",
+              "file_path" => "/Users/pawelski/Projects/AI/rag-system/rag-core/data/system_architecture.pdf",
               "file_type" => ".pdf"
             },
             {
@@ -72,6 +72,8 @@ RSpec.describe "Documents", type: :request do
         it "displays document file names" do
           get documents_path
           expect(response.body).to include("database_design_principles.pdf")
+          expect(response.body).to include("api_documentation.pdf")
+          expect(response.body).to include("system_architecture.pdf")
           expect(response.body).to include("git_workflow_guide.pdf")
         end
 
@@ -91,22 +93,10 @@ RSpec.describe "Documents", type: :request do
           expect(response.body).to include("/Users/pawelski/Projects/AI/rag-system/rag-core/data/database_design_principles.pdf")
         end
 
-        it "displays total document and file counts" do
+        it "displays total document count" do
           get documents_path
           expect(response.body).to include("4")
           expect(response.body).to match(/documents/i)
-          expect(response.body).to include("2")
-          expect(response.body).to match(/files/i)
-        end
-
-        it "groups documents by file name" do
-          get documents_path
-          # Should show 3 documents for database_design_principles.pdf
-          expect(response.body).to include("3")
-          expect(response.body).to match(/documents/i)
-          # Should show 1 document for git_workflow_guide.pdf
-          expect(response.body).to include("1")
-          expect(response.body).to match(/document/i)
         end
       end
 
@@ -270,46 +260,11 @@ RSpec.describe "Documents", type: :request do
             )
         end
 
-        it "uses singular form for counts" do
+        it "uses singular form for document count" do
           get documents_path
-          # Should show "1 document across 1 file"
+          # Should show "1 document found"
           expect(response.body).to include("1")
           expect(response.body).to match(/document(?!s)/i) # matches "document" but not "documents"
-          expect(response.body).to match(/file(?!s)/i) # matches "file" but not "files"
-        end
-      end
-
-      context "with many documents for same file (more than 5)" do
-        let(:many_documents_response) do
-          (1..10).map do |i|
-            {
-              "doc_id" => "doc-id-#{i}",
-              "file_name" => "large_document.pdf",
-              "file_path" => "/path/to/large_document.pdf",
-              "file_type" => ".pdf"
-            }
-          end
-        end
-
-        before do
-          stub_request(:get, "#{base_url}/documents")
-            .to_return(
-              status: 200,
-              body: many_documents_response.to_json,
-              headers: { "Content-Type" => "application/json" }
-            )
-        end
-
-        it "shows scrollable list with scroll hint" do
-          get documents_path
-          expect(response.body).to include("Scroll to view all document IDs")
-        end
-
-        it "displays all document IDs" do
-          get documents_path
-          (1..10).each do |i|
-            expect(response.body).to include("doc-id-#{i}")
-          end
         end
       end
     end
