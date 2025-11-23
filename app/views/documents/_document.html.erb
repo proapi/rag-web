@@ -1,0 +1,61 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow" id="<%= "document_#{document['doc_id']}" if document["doc_id"].present? %>">
+  <!-- Card Header -->
+  <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="flex-shrink-0">
+          <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 break-all">
+            <%= document["file_name"] %>
+          </h3>
+        </div>
+      </div>
+
+      <!-- File Type Badge -->
+      <% file_type = document["file_type"] || "unknown" %>
+      <% badge_class = case file_type.downcase
+           when ".pdf", "pdf" then "bg-red-100 text-red-800"
+           when ".txt", ".md", "txt", "md" then "bg-blue-100 text-blue-800"
+           when ".doc", ".docx", "doc", "docx" then "bg-blue-100 text-blue-800"
+           when ".html", ".htm", "html", "htm" then "bg-orange-100 text-orange-800"
+           else "bg-gray-100 text-gray-800"
+           end %>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= badge_class %>">
+        <%= file_type.upcase.sub('.', '') %>
+      </span>
+    </div>
+  </div>
+
+  <!-- Card Body -->
+  <div class="px-6 py-5">
+    <!-- Document ID -->
+    <div class="mb-6">
+      <h4 class="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+        <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
+        </svg>
+        Document ID
+      </h4>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <code class="text-sm font-mono text-gray-900 break-all"><%= document["doc_id"] || "N/A" %></code>
+      </div>
+    </div>
+
+    <!-- File Path -->
+    <div>
+      <h4 class="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+        <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+        </svg>
+        File Location
+      </h4>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <p class="text-sm font-mono text-gray-900 break-all"><%= document["file_path"] || "N/A" %></p>
+      </div>
+    </div>
+  </div>
+</div>

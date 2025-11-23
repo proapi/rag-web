@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   get "dashboard/show"
   post "dashboard/query"
-  resources :documents, only: [ :index ]
+  resources :documents, only: [ :index, :new, :create ]
   resources :indexes, only: [ :index ]
   resource :session
   resources :passwords, param: :token

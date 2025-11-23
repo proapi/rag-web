@@ -88,12 +88,45 @@ module Rag
       raise Error, "An unexpected error occurred"
     end
 
+    def upload_document(file, auto_index: false)
+      response = self.class.post(
+        "/documents/upload",
+        headers: upload_headers,
+        body: {
+          file: file,
+          auto_index: auto_index
+        },
+        timeout: 60 # Longer timeout for file uploads
+      )
+
+      handle_response(response, :upload)
+    rescue AuthenticationError, InvalidResponseError, Error
+      # Re-raise our custom errors
+      raise
+    rescue HTTParty::Error => e
+      Rails.logger.error("RAG API HTTParty Error: #{e.message}")
+      raise ConnectionError, "Unable to reach RAG service"
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.error("RAG API Timeout: #{e.message}")
+      raise TimeoutError, "Upload timed out, please try again"
+    rescue StandardError => e
+      Rails.logger.error("RAG API Unknown Error: #{e.class} - #{e.message}")
+      raise Error, "An unexpected error occurred during upload"
+    end
+
     private
 
     def headers
       {
         "Content-Type" => "application/json",
         "Authorization" => "Bearer #{@token}"
+      }
+    end
+
+    def upload_headers
+      {
+        "Authorization" => "Bearer #{@token}"
+        # HTTParty will automatically set Content-Type for multipart/form-data
       }
     end
 
@@ -107,6 +140,9 @@ module Rag
       when 400
         Rails.logger.error("RAG API Bad Request: #{response.body}")
         raise InvalidResponseError, "Invalid request sent to RAG service"
+      when 422
+        Rails.logger.error("RAG API Validation Error: #{response.body}")
+        raise InvalidResponseError, parse_validation_errors(response)
       when 500..599
         Rails.logger.error("RAG API Server Error: #{response.code} - #{response.body}")
         raise Error, "RAG service is experiencing issues"
@@ -135,12 +171,29 @@ module Rag
           Rails.logger.error("RAG API Invalid Documents Response Format: #{response.body}")
           raise InvalidResponseError, "Received invalid documents response format from RAG service"
         end
+      when :upload
+        unless parsed.is_a?(Hash) && parsed["status"]
+          Rails.logger.error("RAG API Invalid Upload Response Format: #{response.body}")
+          raise InvalidResponseError, "Received invalid upload response format from RAG service"
+        end
       end
 
       parsed
     rescue JSON::ParserError => e
       Rails.logger.error("RAG API JSON Parse Error: #{e.message}")
       raise InvalidResponseError, "Unable to parse response from RAG service"
+    end
+
+    def parse_validation_errors(response)
+      parsed = JSON.parse(response.body)
+      if parsed.is_a?(Hash) && parsed["detail"].is_a?(Array)
+        errors = parsed["detail"].map { |err| err["msg"] }.join(", ")
+        "Validation error: #{errors}"
+      else
+        "Validation error occurred"
+      end
+    rescue JSON::ParserError
+      "Validation error occurred"
     end
   end
 end
