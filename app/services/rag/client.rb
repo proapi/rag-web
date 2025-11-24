@@ -114,6 +114,31 @@ module Rag
       raise Error, "An unexpected error occurred during upload"
     end
 
+    def build_index(force: true)
+      response = self.class.post(
+        "/index/build",
+        headers: headers,
+        body: {
+          force: force
+        }.to_json,
+        timeout: 60 # Longer timeout for index building
+      )
+
+      handle_response(response, :build_index)
+    rescue AuthenticationError, InvalidResponseError, Error
+      # Re-raise our custom errors
+      raise
+    rescue HTTParty::Error => e
+      Rails.logger.error("RAG API HTTParty Error: #{e.message}")
+      raise ConnectionError, "Unable to reach RAG service"
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.error("RAG API Timeout: #{e.message}")
+      raise TimeoutError, "Index build timed out, please try again"
+    rescue StandardError => e
+      Rails.logger.error("RAG API Unknown Error: #{e.class} - #{e.message}")
+      raise Error, "An unexpected error occurred during index build"
+    end
+
     private
 
     def headers
@@ -175,6 +200,11 @@ module Rag
         unless parsed.is_a?(Hash) && parsed["status"]
           Rails.logger.error("RAG API Invalid Upload Response Format: #{response.body}")
           raise InvalidResponseError, "Received invalid upload response format from RAG service"
+        end
+      when :build_index
+        unless parsed.is_a?(Hash)
+          Rails.logger.error("RAG API Invalid Build Index Response Format: #{response.body}")
+          raise InvalidResponseError, "Received invalid build index response format from RAG service"
         end
       end
 

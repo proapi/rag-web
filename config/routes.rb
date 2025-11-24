@@ -2,7 +2,9 @@ Rails.application.routes.draw do
   get "dashboard/show"
   post "dashboard/query"
   resources :documents, only: [ :index, :new, :create ]
-  resources :indexes, only: [ :index ]
+  resources :indexes, only: [ :index ] do
+    post :build, on: :collection
+  end
   resource :session
   resources :passwords, param: :token
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

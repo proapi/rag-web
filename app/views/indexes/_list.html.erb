@@ -1,0 +1,232 @@
+<% if @indexes.empty? %>
+  <!-- Empty State -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+    </svg>
+    <h3 class="mt-4 text-lg font-medium text-gray-900">No indexes found</h3>
+    <p class="mt-2 text-sm text-gray-500">There are currently no document indexes available.</p>
+  </div>
+<% else %>
+  <!-- Indexes Cards -->
+  <div class="space-y-6">
+  <% @indexes.each do |index| %>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      <!-- Card Header -->
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">
+                Operation #<%= index["operation_id"] %>
+              </h3>
+              <p class="text-sm text-gray-600">
+                Triggered by: <span class="font-medium"><%= index["triggered_by"] || "N/A" %></span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Status Badge -->
+          <% status = index["status"] || "unknown" %>
+          <% badge_class = case status.downcase
+               when "completed" then "bg-green-100 text-green-800"
+               when "pending", "processing" then "bg-yellow-100 text-yellow-800"
+               when "failed", "error" then "bg-red-100 text-red-800"
+               else "bg-gray-100 text-gray-800"
+               end %>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= badge_class %>">
+            <%= status.capitalize %>
+          </span>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="px-6 py-5">
+        <!-- Basic Information Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <!-- Documents Count -->
+          <div>
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Documents</dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900">
+              <%= index["num_documents"] || 0 %>
+            </dd>
+          </div>
+
+          <!-- Duration -->
+          <div>
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Duration</dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900">
+              <% duration = index["duration_seconds"] || 0 %>
+              <%= duration > 0 ? "#{duration.round(2)}s" : "N/A" %>
+            </dd>
+          </div>
+
+          <!-- Chunk Size -->
+          <div>
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Chunk Size</dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900">
+              <%= index["chunk_size"] || "N/A" %>
+            </dd>
+          </div>
+        </div>
+
+        <!-- Configuration Details -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Configuration
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Embedding Model:</span>
+              <span class="text-sm font-medium text-gray-900 text-right ml-2 break-all">
+                <%= index["embedding_model"] || "N/A" %>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Chunk Overlap:</span>
+              <span class="text-sm font-medium text-gray-900"><%= index["chunk_overlap"] || "N/A" %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Top K:</span>
+              <span class="text-sm font-medium text-gray-900"><%= index["top_k"] || "N/A" %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Force Rebuild:</span>
+              <span class="text-sm font-medium text-gray-900">
+                <%= index["force_rebuild"] ? "Yes" : "No" %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paths -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+            </svg>
+            Directory Paths
+          </h4>
+          <div class="space-y-2 bg-gray-50 rounded-lg p-4">
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Storage Directory:</span>
+              <p class="text-sm font-mono text-gray-900 break-all"><%= index["storage_dir"] || "N/A" %></p>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Data Directory:</span>
+              <p class="text-sm font-mono text-gray-900 break-all"><%= index["data_dir"] || "N/A" %></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timestamps -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Timeline
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 rounded-lg p-4">
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Scheduled At:</span>
+              <p class="text-sm text-gray-900">
+                <%= index["scheduled_at"] ? Time.parse(index["scheduled_at"]).strftime("%Y-%m-%d %H:%M:%S") : "N/A" rescue "Invalid date" %>
+              </p>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Started At:</span>
+              <p class="text-sm text-gray-900">
+                <%= index["started_at"] ? Time.parse(index["started_at"]).strftime("%Y-%m-%d %H:%M:%S") : "N/A" rescue "Invalid date" %>
+              </p>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Completed At:</span>
+              <p class="text-sm text-gray-900">
+                <%= index["completed_at"] ? Time.parse(index["completed_at"]).strftime("%Y-%m-%d %H:%M:%S") : "N/A" rescue "Invalid date" %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Storage Information -->
+        <% if index["storage"].present? %>
+          <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+              <svg class="h-5 w-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+              </svg>
+              Storage Details
+            </h4>
+            <% storage = index["storage"] %>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 rounded-lg p-4">
+              <div>
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Docstore Size:</span>
+                <p class="text-sm font-medium text-gray-900">
+                  <%= number_to_human_size(storage["docstore_size_bytes"] || 0) %>
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Vector Store Size:</span>
+                <p class="text-sm font-medium text-gray-900">
+                  <%= number_to_human_size(storage["vector_store_size_bytes"] || 0) %>
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Index Store Size:</span>
+                <p class="text-sm font-medium text-gray-900">
+                  <%= number_to_human_size(storage["index_store_size_bytes"] || 0) %>
+                </p>
+              </div>
+              <div class="md:col-span-2 lg:col-span-3">
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Last Indexed:</span>
+                <p class="text-sm text-gray-900">
+                  <%= storage["last_indexed_at"] ? Time.parse(storage["last_indexed_at"]).strftime("%Y-%m-%d %H:%M:%S UTC") : "N/A" rescue "Invalid date" %>
+                </p>
+              </div>
+              <% if storage["status_message"].present? %>
+                <div class="md:col-span-2 lg:col-span-3">
+                  <span class="text-xs text-gray-500 uppercase tracking-wide">Status Message:</span>
+                  <p class="text-sm text-gray-900 mt-1 p-3 bg-white rounded border border-gray-200">
+                    <%= storage["status_message"] %>
+                  </p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Error Message (if any) -->
+        <% if index["error_message"].present? %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h4 class="text-sm font-semibold text-red-900 mb-2 flex items-center">
+              <svg class="h-5 w-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Error Message
+            </h4>
+            <p class="text-sm text-red-800 font-mono"><%= index["error_message"] %></p>
+          </div>
+        <% end %>
+
+        <!-- Metadata (if any) -->
+        <% if index["metadata"].present? %>
+          <div class="mt-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-2">Additional Metadata:</h4>
+            <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= JSON.pretty_generate(index["metadata"]) %></pre>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+  </div>
+<% end %>
