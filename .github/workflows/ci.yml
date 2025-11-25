@@ -67,6 +67,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RAG_API_TOKEN: randomisation
 
     steps:
       - name: Checkout code
