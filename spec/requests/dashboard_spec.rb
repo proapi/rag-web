@@ -2,10 +2,21 @@ require "rails_helper"
 
 RSpec.describe "Dashboard", type: :request do
   let(:user) { create(:user) }
+  let(:rag_api_url) { ENV.fetch('RAG_API_URL', 'http://localhost:3001') }
 
   describe "GET /dashboard/show" do
     before do
       sign_in(user)
+      # Stub the documents API call
+      stub_request(:get, "#{rag_api_url}/documents")
+        .to_return(
+          status: 200,
+          body: [
+            { "doc_id" => "1", "file_name" => "test.pdf" },
+            { "doc_id" => "2", "file_name" => "example.txt" }
+          ].to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
     end
     it "returns success" do
       get dashboard_show_path
@@ -28,6 +39,53 @@ RSpec.describe "Dashboard", type: :request do
       get dashboard_show_path
 
       expect(response.body).to include("5")
+    end
+  end
+
+  describe "GET /dashboard/documents_stat" do
+    before do
+      sign_in(user)
+    end
+
+    it "returns success" do
+      stub_request(:get, "#{rag_api_url}/documents")
+        .to_return(
+          status: 200,
+          body: [
+            { "doc_id" => "1", "file_name" => "test.pdf" },
+            { "doc_id" => "2", "file_name" => "example.txt" },
+            { "doc_id" => "3", "file_name" => "doc.docx" }
+          ].to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      get dashboard_documents_stat_path
+      expect(response).to have_http_status(:success)
+    end
+
+    it "displays the document count" do
+      stub_request(:get, "#{rag_api_url}/documents")
+        .to_return(
+          status: 200,
+          body: [
+            { "doc_id" => "1", "file_name" => "test.pdf" },
+            { "doc_id" => "2", "file_name" => "example.txt" },
+            { "doc_id" => "3", "file_name" => "doc.docx" }
+          ].to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      get dashboard_documents_stat_path
+      expect(response.body).to include("3")
+    end
+
+    it "handles API failures gracefully" do
+      stub_request(:get, "#{rag_api_url}/documents")
+        .to_return(status: 500)
+
+      get dashboard_documents_stat_path
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("0")
     end
   end
 

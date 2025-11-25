@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   get "dashboard/show"
   post "dashboard/query"
+  get "dashboard/documents_stat"
   resources :documents, only: [ :index, :new, :create ]
   resources :indexes, only: [ :index ] do
     post :build, on: :collection
